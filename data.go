@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"os"
 	"os/exec"
 	"strings"
 )
@@ -99,11 +98,7 @@ func GetTopology() []Metrics {
 //		}
 //	}
 func main() {
-	args := os.Args
-	metric := Metrics{
-		Pod1: args[1],
-		Pod2: args[2],
-	}
+	metric := Metrics{}
 	http.Handle("/metrics", metric)
 	http.ListenAndServe(":2112", nil)
 }
