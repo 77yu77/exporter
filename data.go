@@ -9,6 +9,10 @@ import (
 )
 
 type Metrics struct {
+	Name string
+}
+
+type LinkPair struct {
 	Pod1 string
 	Pod2 string
 }
@@ -21,17 +25,18 @@ const (
 
 func (m Metrics) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	name := "LinkStatus"
-	types := []string{}
-	types = append(types, "star1", "star2", "bandwidth", "laterncy", "BFR")
+	linkTypes := []string{}
+	linkTypes = append(linkTypes, "networkName", "star1", "star2", "bandwidth", "laterncy", "BFR")
 	metrics := GetTopology()
 
 	for _, metric := range metrics {
 		data := []string{}
-		data = append(data, metric.Pod1, metric.Pod2, "100MB/sec", "5ms", "0.1%")
-		if s, err := GeneratePromData(name, types, data); err == nil {
+		data = append(data, m.Name, metric.Pod1, metric.Pod2, "100MB/sec", "5ms", "0.1%")
+		if s, err := GeneratePromData(name, linkTypes, data); err == nil {
 			fmt.Fprint(w, s)
 		}
 	}
+
 }
 
 func GetNICTraffic(NIC string) string {
@@ -48,7 +53,7 @@ func GetLinkLaterncy(target string) string {
 	return laterncy
 }
 
-func GetTopology() []Metrics {
+func GetTopology() []LinkPair {
 	cmd := exec.Command("echo", "$PODNAME")
 	stdout, _ := cmd.CombinedOutput()
 	podName := string(stdout)
@@ -56,17 +61,7 @@ func GetTopology() []Metrics {
 	stdout, _ = cmd.CombinedOutput()
 	outStr := string(stdout)
 	outLines := strings.Split(outStr, "\n")
-	metrics := make([]Metrics, 0)
-	var metric Metrics
-	// for _, word := range words {
-	// 	if strings.Contains(word, vNICName) {
-	// 		if metric.Pod1 == "" {
-	// 			metric.Pod1 = word
-	// 		} else {
-	// 			metric.Pod2 = word
-	// 		}
-	// 	}
-	// }
+	linkPairs := make([]LinkPair, 0)
 	NICs := make([]string, 0)
 	for _, line := range outLines {
 		if strings.Contains(line, GolbalIPSegment) {
@@ -77,14 +72,13 @@ func GetTopology() []Metrics {
 		} else if strings.Contains(line, LinkSymbol) {
 			for _, NIC := range NICs {
 				if strings.Contains(line, NIC) {
-					metrics = append(metrics, Metrics{Pod1: podName, Pod2: NIC})
+					linkPairs = append(linkPairs, LinkPair{Pod1: podName, Pod2: NIC})
 					break
 				}
 			}
 		}
-		metrics = append(metrics, metric)
 	}
-	return metrics
+	return linkPairs
 }
 
 //	func (m Metrics) ServeHTTP(w http.ResponseWriter, req *http.Request) {
