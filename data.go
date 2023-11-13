@@ -110,3 +110,5 @@ func GeneratePromData(name string, types []string, datas []string) (string, erro
 	result = result[:len(result)-1] + "} 1"
 	return result, nil
 }
+
+//CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o link_exporter data.go
