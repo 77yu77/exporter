@@ -21,18 +21,18 @@ type StarStatus struct {
 }
 
 const (
-	ContainerSymbol = "mongo_edge-mongo"
+	ContainerSymbol = "sdn"
 )
 
 func (m Metrics) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	name := "StarStatus"
 	ContainerTypes := []string{}
-	ContainerTypes = append(ContainerTypes, "networkName", "starName", "CPU", "memory", "mempct", "disk")
+	ContainerTypes = append(ContainerTypes, "networkName", "starName", "CPU", "memory", "mempct")
 	stars := GetContainerMessage()
 
 	for _, star := range stars {
 		data := []string{}
-		data = append(data, m.Name, star.Name, star.CPU, star.Memory, star.Mempct, star.Disk)
+		data = append(data, m.Name, star.Name, star.CPU, star.Memory, star.Mempct)
 		print(data)
 		print("\n")
 		if s, err := GeneratePromData(name, ContainerTypes, data); err == nil {

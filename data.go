@@ -40,24 +40,24 @@ func (m Metrics) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 }
 
 func GetNICTraffic(NIC string) string {
-	cmd := exec.Command("./data.sh", NIC)
+	cmd := exec.Command("bash", "-c", fmt.Sprintf("./data.sh %s", NIC))
 	stdout, _ := cmd.CombinedOutput()
 	traffic := string(stdout)
 	return traffic
 }
 
 func GetLinkLaterncy(target string) string {
-	cmd := exec.Command("ping", target)
+	cmd := exec.Command("bash", "-c", fmt.Sprintf("ping %s", target))
 	stdout, _ := cmd.CombinedOutput()
 	laterncy := string(stdout)
 	return laterncy
 }
 
 func GetTopology() []LinkPair {
-	cmd := exec.Command("echo", "$PODNAME")
+	cmd := exec.Command("bash", "-c", "echo $PODNAME")
 	stdout, _ := cmd.CombinedOutput()
 	podName := string(stdout)
-	cmd = exec.Command("ip", "route")
+	cmd = exec.Command("bash", "-c", "ip route")
 	stdout, _ = cmd.CombinedOutput()
 	outStr := string(stdout)
 	outLines := strings.Split(outStr, "\n")
