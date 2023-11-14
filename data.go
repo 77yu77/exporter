@@ -18,9 +18,8 @@ type LinkPair struct {
 }
 
 const (
-	vNICName        = "sdn"
-	GolbalIPSegment = "10.233"
-	LinkSymbol      = "link"
+	vNICName   = "sdn"
+	LinkSymbol = "link"
 )
 
 func (m Metrics) ServeHTTP(w http.ResponseWriter, req *http.Request) {
@@ -40,40 +39,36 @@ func (m Metrics) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 }
 
 func GetNICTraffic(NIC string) string {
-	cmd := exec.Command("bash", "-c", fmt.Sprintf("./data.sh %s", NIC))
+	cmd := exec.Command("sh", "-c", fmt.Sprintf("./data.sh %s", NIC))
 	stdout, _ := cmd.CombinedOutput()
 	traffic := string(stdout)
 	return traffic
 }
 
 func GetLinkLaterncy(target string) string {
-	cmd := exec.Command("bash", "-c", fmt.Sprintf("ping %s", target))
+	cmd := exec.Command("sh", "-c", fmt.Sprintf("ping %s", target))
 	stdout, _ := cmd.CombinedOutput()
 	laterncy := string(stdout)
 	return laterncy
 }
 
 func GetTopology() []LinkPair {
-	cmd := exec.Command("bash", "-c", "echo $PODNAME")
+	cmd := exec.Command("sh", "-c", "echo $PODNAME")
 	stdout, _ := cmd.CombinedOutput()
 	podName := string(stdout)
-	cmd = exec.Command("bash", "-c", "ip route")
+	print(podName)
+	cmd = exec.Command("sh", "-c", "ip route")
 	stdout, _ = cmd.CombinedOutput()
 	outStr := string(stdout)
+	print(outStr)
 	outLines := strings.Split(outStr, "\n")
 	linkPairs := make([]LinkPair, 0)
-	NICs := make([]string, 0)
 	for _, line := range outLines {
-		if strings.Contains(line, GolbalIPSegment) {
-			words := strings.Split(line, " ")
-			NIC := words[len(words)-1]
-			NICs = append(NICs, NIC)
-
-		} else if strings.Contains(line, LinkSymbol) {
-			for _, NIC := range NICs {
-				if strings.Contains(line, NIC) {
-					linkPairs = append(linkPairs, LinkPair{Pod1: podName, Pod2: NIC})
-					break
+		if len(line) != 0 {
+			if strings.Contains(line, LinkSymbol) {
+				if strings.Contains(line, vNICName) {
+					words := strings.Split(line, " ")
+					linkPairs = append(linkPairs, LinkPair{Pod1: podName, Pod2: words[2]})
 				}
 			}
 		}
@@ -92,7 +87,7 @@ func GetTopology() []LinkPair {
 //		}
 //	}
 func main() {
-	metric := Metrics{}
+	metric := Metrics{Name: "Network1"}
 	http.Handle("/metrics", metric)
 	http.ListenAndServe(":2112", nil)
 }
@@ -111,4 +106,4 @@ func GeneratePromData(name string, types []string, datas []string) (string, erro
 	return result, nil
 }
 
-//CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o link_exporter data.go
+// CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o link_exporter data.go
