@@ -18,8 +18,8 @@ type LinkPair struct {
 }
 
 const (
-	vNICName   = "sdn"
 	LinkSymbol = "link"
+	Test       = "eth0"
 )
 
 func (m Metrics) ServeHTTP(w http.ResponseWriter, req *http.Request) {
@@ -66,8 +66,8 @@ func GetTopology() []LinkPair {
 	for _, line := range outLines {
 		if len(line) != 0 {
 			if strings.Contains(line, LinkSymbol) {
-				if strings.Contains(line, vNICName) {
-					words := strings.Split(line, " ")
+				words := strings.Split(line, " ")
+				if words[2] != Test {
 					linkPairs = append(linkPairs, LinkPair{Pod1: podName, Pod2: words[2]})
 				}
 			}

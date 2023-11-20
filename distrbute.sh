@@ -1,4 +1,5 @@
 #!/bin/bash
+## $1:passwd $2:docker image id
 nums=(4 5 6 7 8 9 0)
 for((i=0;i<${#nums[*]};i++));
 do
@@ -20,7 +21,7 @@ spawn ssh $USER@$HOST
 expect "password:"
 send "$1\r"
 expect "$USER"
-send "./monitor &\r"
+send "./monitor Network1 $2&\r"
 expect eof
 EOF
 done 
