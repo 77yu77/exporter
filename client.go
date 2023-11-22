@@ -11,7 +11,7 @@ import (
 func main() {
 	args := os.Args
 	Bandwidth := args[1]
-	cmd := exec.Command("sh", "-c", fmt.Sprintf("echo $ServerIP"))
+	cmd := exec.Command("sh", "-c", fmt.Sprintf("echo $SERVERIP"))
 	stdout, _ := cmd.CombinedOutput()
 	output := string(stdout)
 	ServerIP := strings.Fields(output)[0]
