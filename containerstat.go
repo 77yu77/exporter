@@ -45,7 +45,7 @@ func GetContainerMessage(ImageId string) []StarStatus {
 	cmd := exec.Command("bash", "-c", fmt.Sprintf("docker ps | grep %s", ImageId))
 	stdout, _ := cmd.CombinedOutput()
 	output := string(stdout)
-	print(output)
+	// print(output)
 	containerMessages := strings.Split(output, "\n")
 	containerIds := make(map[string]bool)
 	for _, message := range containerMessages {
@@ -58,7 +58,7 @@ func GetContainerMessage(ImageId string) []StarStatus {
 	cmd = exec.Command("bash", "-c", fmt.Sprintf("docker stats --no-stream"))
 	stdout, _ = cmd.CombinedOutput()
 	output = string(stdout)
-	print(output)
+	// print(output)
 	containerMessages = strings.Split(output, "\n")
 
 	starStatuses := make([]StarStatus, 0)
@@ -73,7 +73,7 @@ func GetContainerMessage(ImageId string) []StarStatus {
 				starStatus.CPU = datas[2]
 				starStatus.Memory = datas[3]
 				starStatus.Mempct = datas[6]
-				fmt.Println(starStatus)
+				// fmt.Println(starStatus)
 				starStatuses = append(starStatuses, starStatus)
 			}
 
