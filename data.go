@@ -13,13 +13,17 @@ type Metrics struct {
 }
 
 type LinkPair struct {
-	Pod1 string
-	Pod2 string
+	Pod1      string
+	Pod2      string
+	Bandwidth string
+	Laterncy  string
 }
 
 const (
+	vNICSymbol = "10.233"
 	LinkSymbol = "link"
 	Test       = "eth0"
+	SrcSymbol  = "src"
 )
 
 func (m Metrics) ServeHTTP(w http.ResponseWriter, req *http.Request) {
@@ -30,7 +34,7 @@ func (m Metrics) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 	for _, metric := range metrics {
 		data := []string{}
-		data = append(data, m.Name, metric.Pod1, metric.Pod2, "100MB/sec", "5ms", "0.1%")
+		data = append(data, m.Name, metric.Pod1, metric.Pod2, metric.Bandwidth, metric.Laterncy, "0.1%")
 		if s, err := GeneratePromData(name, linkTypes, data); err == nil {
 			fmt.Fprint(w, s)
 		}
@@ -42,13 +46,26 @@ func GetNICTraffic(NIC string) string {
 	cmd := exec.Command("sh", "-c", fmt.Sprintf("./data.sh %s", NIC))
 	stdout, _ := cmd.CombinedOutput()
 	traffic := string(stdout)
+	print(traffic)
 	return traffic
 }
 
 func GetLinkLaterncy(target string) string {
-	cmd := exec.Command("sh", "-c", fmt.Sprintf("ping %s", target))
+	cmd := exec.Command("sh", "-c", fmt.Sprintf("ping -c 5 -i 0.2 %s", target))
 	stdout, _ := cmd.CombinedOutput()
-	laterncy := string(stdout)
+	outStr := string(stdout)
+	print(outStr)
+	if strings.Contains(outStr, "100% packet loss") {
+		return "--"
+	}
+	outLines := strings.Split(outStr, "\n")
+	var laterncy string
+	for _, line := range outLines {
+		if strings.Contains(line, "rtt") {
+			words := strings.Split(line, "/")
+			laterncy = words[4]
+		}
+	}
 	return laterncy
 }
 
@@ -63,15 +80,23 @@ func GetTopology() []LinkPair {
 	print(outStr)
 	outLines := strings.Split(outStr, "\n")
 	linkPairs := make([]LinkPair, 0)
+	starIPs := make(map[string]string)
 	for _, line := range outLines {
 		if len(line) != 0 {
-			if strings.Contains(line, LinkSymbol) {
+			if strings.Contains(line, vNICSymbol) {
 				words := strings.Split(line, " ")
-				if words[2] != Test {
-					linkPairs = append(linkPairs, LinkPair{Pod1: podName, Pod2: words[2]})
+				starIPs[words[2]] = words[0]
+			} else if strings.Contains(line, LinkSymbol) && strings.Contains(line, SrcSymbol) {
+				words := strings.Split(line, " ")
+				if value, ok := starIPs[words[2]]; ok {
+					linkPairs = append(linkPairs, LinkPair{Pod1: podName, Pod2: words[2], Bandwidth: GetNICTraffic(words[2]), Laterncy: GetLinkLaterncy(value)})
 				}
 			}
 		}
+	}
+	for key, value := range starIPs {
+		print(key)
+		print(value)
 	}
 	return linkPairs
 }
